@@ -64,7 +64,7 @@ pip install session-engram
 Or from source:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/session-engram.git
+git clone https://github.com/ZyanWan/Session-engram.git
 cd session-engram
 pip install -e .
 ```

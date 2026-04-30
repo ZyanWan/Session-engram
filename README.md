@@ -7,7 +7,7 @@
 >
 > Cross-dialogue session memory system — persistent context, reusable experience, AI automatic recall.
 
-[English](README_EN.md) | [中文](README_CN.md)
+[English](docs/README_EN.md) | [中文](docs/README_CN.md)
 
 ---
 
@@ -47,8 +47,8 @@ sengram index
 
 ## Documentation
 
-- **Full English Documentation**: [README_EN.md](README_EN.md)
-- **完整中文文档**: [README_CN.md](README_CN.md)
+- **Full English Documentation**: [README_EN.md](docs/README_EN.md)
+- **完整中文文档**: [README_CN.md](docs/README_CN.md)
 
 ## License
 

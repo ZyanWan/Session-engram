@@ -63,7 +63,7 @@ pip install session-engram
 或从源码安装：
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/session-engram.git
+git clone https://github.com/ZyanWan/Session-engram.git
 cd session-engram
 pip install -e .
 ```

@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23333'/><circle cx='10' cy='16' r='3.5' fill='white' opacity='.9'/><circle cx='22' cy='10' r='3.5' fill='%23999'/><circle cx='22' cy='22' r='3.5' fill='%23CCC'/><line x1='12.5' y1='14.5' x2='19' y2='11.5' stroke='white' stroke-width='1.5' opacity='.4'/><line x1='12.5' y1='17.5' x2='19' y2='20.5' stroke='white' stroke-width='1.5' opacity='.4'/></svg>">
+  <title>Engram - Memory Map</title>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #F9FAFB;
+      color: #333333;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #graph {
+      flex: 1;
+      position: relative;
+      background: #FAFAFA;
+    }
+
+    #graph::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, #D1D5DB 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+    }
+
+    #sidebar {
+      width: 300px;
+      min-width: 300px;
+      background: #FFFFFF;
+      border-left: 1px solid #E5E7EB;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 10;
+      margin-top: 42px;
+      height: calc(100vh - 42px);
+      position: relative;
+    }
+
+    #search-wrap {
+      padding: 14px 16px;
+      border-bottom: 1px solid #F3F4F6;
+    }
+
+    #search {
+      width: 100%;
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      color: #333333;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.15s;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    #search:focus {
+      border-color: #999999;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    #search::placeholder {
+      color: #9CA3AF;
+    }
+
+    #search-results {
+      max-height: 140px;
+      overflow-y: auto;
+      padding: 4px 12px;
+      border-bottom: 1px solid #F3F4F6;
+      display: none;
+    }
+
+    .search-item {
+      padding: 6px 8px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: background 0.12s;
+      color: #555555;
+    }
+
+    .search-item:hover {
+      background: #F3F4F6;
+    }
+
+    #time-filter {
+      padding: 10px 16px;
+      border-bottom: 1px solid #F3F4F6;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    #time-filter label {
+      font-size: 11px;
+      color: #9CA3AF;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    #time-filter input[type=date] {
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      color: #333333;
+      padding: 4px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      outline: none;
+      width: 105px;
+    }
+
+    #time-filter input[type=date]:focus {
+      border-color: #999999;
+    }
+
+    #time-filter button {
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      color: #6B7280;
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.12s;
+      font-weight: 500;
+    }
+
+    #time-filter button:hover {
+      background: #F9FAFB;
+      border-color: #CCCCCC;
+      color: #444444;
+    }
+
+    #info-panel {
+      padding: 16px;
+      border-bottom: 1px solid #F3F4F6;
+      min-height: 100px;
+      max-height: 280px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    #info-panel h3 {
+      font-size: 10px;
+      color: #9CA3AF;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    #info-content {
+      font-size: 13px;
+      color: #555555;
+      line-height: 1.65;
+    }
+
+    #info-content .field {
+      margin-bottom: 3px;
+    }
+
+    #info-content .field b {
+      color: #222222;
+      font-weight: 600;
+    }
+
+    #info-content .empty {
+      color: #C4C4C4;
+      font-style: italic;
+      text-align: center;
+      padding: 20px 0;
+      font-size: 12px;
+    }
+
+    #info-content .summary {
+      color: #777777;
+      font-size: 11.5px;
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #F9FAFB;
+      border-radius: 8px;
+      line-height: 1.6;
+      border-left: 2px solid #E5E7EB;
+    }
+
+    #info-content .filepath {
+      color: #888888;
+      font-size: 10.5px;
+      word-break: break-all;
+      cursor: pointer;
+      opacity: 0.75;
+      transition: opacity 0.12s;
+    }
+
+    #info-content .filepath:hover {
+      opacity: 1;
+      text-decoration: underline;
+      color: #555555;
+    }
+
+    #info-content .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    #info-content .tag-chip {
+      background: #F3F4F6;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      color: #6B7280;
+      cursor: pointer;
+      transition: all 0.12s;
+      border: 1px solid transparent;
+      font-weight: 500;
+    }
+
+    #info-content .tag-chip:hover {
+      background: #EDEEF0;
+      color: #444444;
+    }
+
+    .neighbor-link {
+      display: block;
+      padding: 3px 8px;
+      margin: 2px 0;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 11.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-left: 2px solid transparent;
+      transition: all 0.12s;
+      color: #888888;
+    }
+
+    .neighbor-link:hover {
+      background: #F9FAFB;
+      color: #555555;
+      padding-left: 12px;
+    }
+
+    #neighbors-list {
+      max-height: 130px;
+      overflow-y: auto;
+      margin-top: 6px;
+    }
+
+    #legend-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+    }
+
+    #legend-wrap h3 {
+      font-size: 10px;
+      color: #9CA3AF;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 6px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #666666;
+      transition: all 0.12s;
+    }
+
+    .legend-item:hover {
+      background: #F3F4F6;
+      color: #333333;
+    }
+
+    .legend-item.dimmed {
+      opacity: 0.25;
+    }
+
+    .legend-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+    }
+
+    .legend-label {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .legend-count {
+      color: #AAAAAA;
+      font-size: 10.5px;
+      font-weight: 500;
+    }
+
+    #hyperedge-wrap {
+      padding: 12px 16px;
+      border-top: 1px solid #F3F4F6;
+    }
+
+    #hyperedge-wrap h3 {
+      font-size: 10px;
+      color: #9CA3AF;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .hyperedge-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 6px;
+      cursor: pointer;
+      font-size: 11.5px;
+      color: #888888;
+      border-radius: 5px;
+      transition: all 0.12s;
+    }
+
+    .hyperedge-item:hover {
+      background: #F9FAFB;
+      color: #666666;
+    }
+
+    .hyperedge-badge {
+      background: #F3F4F6;
+      color: #777777;
+      padding: 1px 7px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    #stats {
+      padding: 12px 16px;
+      border-top: 1px solid #F3F4F6;
+      font-size: 10.5px;
+      color: #BBBBBB;
+      background: #FAFAFA;
+    }
+
+    #legend-controls {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    #legend-controls button {
+      flex: 1;
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      color: #6B7280;
+      padding: 5px 0;
+      border-radius: 6px;
+      font-size: 10.5px;
+      cursor: pointer;
+      transition: all 0.12s;
+      font-weight: 500;
+    }
+
+    #legend-controls button:hover {
+      background: #F9FAFB;
+      border-color: #CCCCCC;
+      color: #444444;
+    }
+
+    #header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 42px;
+      background: #FFFFFF;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #F3F4F6;
+      z-index: 100;
+    }
+
+    .title {
+      font-family: 'SF Pro Display', -apple-system, Georgia, 'Times New Roman', serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: #333333;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: baseline;
+      gap: 1px;
+    }
+
+    .title span {
+      color: #BBBBBB;
+      font-weight: 400;
+    }
+
+    #perf-warning {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      color: #666666;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 12px;
+      z-index: 200;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #D1D5DB;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #AAB0B8;
+    }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <div class="title"><span>Engram</span>Memory Map</div>
+  </div>
+  <div id="graph" style="margin-top:42px;"></div>
+  <div id="sidebar">
+    <div id="search-wrap">
+      <input id="search" type="text" placeholder="Search nodes or tags..." autocomplete="off">
+      <div id="search-results"></div>
+    </div>
+    <div id="time-filter">
+      <label>From</label>
+      <input type="date" id="date-from" value="__DATE_MIN__">
+      <label>To</label>
+      <input type="date" id="date-to" value="__DATE_MAX__">
+      <button onclick="applyTimeFilter()">Filter</button>
+      <button onclick="clearTimeFilter()">Reset</button>
+    </div>
+    <div id="info-panel">
+      <h3>Node Info</h3>
+      <div id="info-content"><span class="empty">Click a node to inspect</span></div>
+    </div>
+    <div id="legend-wrap">
+      <h3>Communities</h3>
+      <div id="legend-controls">
+        <button onclick="toggleAllCommunities(false)">Show All</button>
+        <button onclick="toggleAllCommunities(true)">Hide All</button>
+      </div>
+      <div id="legend"></div>
+    </div>
+    <div id="hyperedge-wrap" style="display:none">
+      <h3>Hyperedges (Tag Clusters)</h3>
+      <div id="hyperedge-list"></div>
+    </div>
+    <div id="stats">__STATS__</div>
+  </div>
+  <div id="perf-warning">Large graph — physics disabled after layout for performance</div>
+<script>
+    const RAW_NODES = /*__NODES__*/[];
+    const RAW_EDGES = /*__EDGES__*/[];
+    const LEGEND = /*__LEGEND__*/[];
+    const HYPEREDGES = /*__HYPEREDGES__*/[];
+    const PERF_WARNING = __PERF_WARNING__;
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    if (PERF_WARNING) document.getElementById('perf-warning').style.display = 'block';
+
+    const nodesDS = new vis.DataSet(RAW_NODES.map(n => ({
+      id: n.id, label: n.label, color: n.color, size: n.size,
+      font: n.font, title: n.title,
+      _community: n.community, _community_name: n.community_name,
+      _source_file: n.source_file, _file_type: n.file_type, _degree: n.degree,
+      _summary: n.summary, _created: n.created, _updated: n.updated, _tags: n.tags,
+    })));
+
+    const edgesDS = new vis.DataSet(RAW_EDGES.map((e, i) => ({
+      id: i, from: e.from, to: e.to,
+      label: e.label,
+      title: e.title,
+      dashes: e.dashes,
+      width: e.width,
+      color: e.color,
+      arrows: e.arrows,
+    })));
+
+    const container = document.getElementById('graph');
+    const network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, {
+      physics: {
+        enabled: true,
+        solver: 'forceAtlas2Based',
+        forceAtlas2Based: {
+          gravitationalConstant: -80,
+          centralGravity: 0.01,
+          springLength: 200,
+          springConstant: 0.04,
+          damping: 0.35,
+          avoidOverlap: 1.2,
+        },
+        stabilization: { iterations: RAW_NODES.length > 50 ? 500 : 400, fit: true, updateInterval: 25 },
+      },
+      interaction: {
+        hover: true,
+        tooltipDelay: 120,
+        hideEdgesOnDrag: true,
+        navigationButtons: false,
+        keyboard: false,
+        multiselect: false,
+        zoomView: true,
+        dragView: true,
+      },
+      nodes: {
+        shape: 'dot',
+        borderWidth: 1.5,
+        borderWidthSelected: 3,
+        scaling: { min: 10, max: 30 },
+      },
+      edges: {
+        smooth: { type: 'continuous', roundness: 0.12, forceDirection: 'none' },
+        selectionWidth: 2,
+        hoverWidth: 1.5,
+      },
+    });
+
+    network.once('stabilizationIterationsDone', () => {
+      network.setOptions({ physics: { enabled: false } });
+      setTimeout(() => { document.getElementById('perf-warning').style.display = 'none'; }, 3000);
+    });
+
+    function showInfo(nodeId) {
+      const n = nodesDS.get(nodeId);
+      if (!n) return;
+      const neighborIds = network.getConnectedNodes(nodeId);
+      const neighborItems = neighborIds.map(nid => {
+        const nb = nodesDS.get(nid);
+        const color = nb ? nb.color.background : '#999';
+        return `<span class="neighbor-link" style="border-left-color:${esc(color)}" onclick="focusNode(${JSON.stringify(nid)})">${esc(nb ? nb.label : nid)}</span>`;
+      }).join('');
+      const tagsHtml = (n._tags || []).map(t =>
+        `<span class="tag-chip" onclick="highlightTag(${JSON.stringify(t)})">${esc(t)}</span>`
+      ).join('');
+      document.getElementById('info-content').innerHTML = `
+    <div class="field"><b>${esc(n.label)}</b></div>
+    <div class="field">Type: ${esc(n._file_type || 'unknown')}</div>
+    <div class="field">Community: ${esc(n._community_name)}</div>
+    <div class="filepath" onclick="copyPath(this)" title="Click to copy">${esc(n._source_file || '-')}</div>
+    <div class="field">Created: ${esc(n._created || '-')} · Updated: ${esc(n._updated || '-')}</div>
+    <div class="field">Degree: ${n._degree}</div>
+    ${tagsHtml ? `<div class="tag-list">${tagsHtml}</div>` : ''}
+    ${n._summary ? `<div class="summary">${n._summary}</div>` : ''}
+    ${neighborIds.length ? `<div class="field" style="margin-top:8px;color:#999;font-size:11px">Neighbors (${neighborIds.length})</div><div id="neighbors-list">${neighborItems}</div>` : ''}
+  `;
+    }
+
+    function copyPath(el) {
+      const text = el.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = el.textContent;
+        el.textContent = 'Copied!';
+        setTimeout(() => { el.textContent = orig; }, 1000);
+      }).catch(() => {});
+    }
+
+    function highlightTag(tag) {
+      const q = tag.toLowerCase();
+      const updates = RAW_NODES.map(n => ({
+        id: n.id,
+        hidden: !(n.tags || []).some(t => t.toLowerCase() === q)
+      }));
+      nodesDS.update(updates);
+    }
+
+    function focusNode(nodeId) {
+      network.focus(nodeId, { scale: 1.4, animation: true });
+      network.selectNodes([nodeId]);
+      showInfo(nodeId);
+    }
+
+    let hoveredNodeId = null;
+    network.on('hoverNode', params => {
+      hoveredNodeId = params.node;
+      container.style.cursor = 'pointer';
+    });
+    network.on('blurNode', () => {
+      hoveredNodeId = null;
+      container.style.cursor = 'default';
+    });
+    container.addEventListener('click', () => {
+      if (hoveredNodeId !== null) {
+        showInfo(hoveredNodeId);
+        network.selectNodes([hoveredNodeId]);
+      }
+    });
+    network.on('click', params => {
+      if (params.nodes.length > 0) {
+        showInfo(params.nodes[0]);
+      } else if (hoveredNodeId === null) {
+        document.getElementById('info-content').innerHTML = '<span class="empty">Click a node to inspect it</span>';
+      }
+    });
+
+    const searchInput = document.getElementById('search');
+    const searchResults = document.getElementById('search-results');
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase().trim();
+      searchResults.innerHTML = '';
+      if (!q) { searchResults.style.display = 'none'; return; }
+      const matches = RAW_NODES.filter(n => n.label.toLowerCase().includes(q) || (n.tags || []).some(t => t.toLowerCase().includes(q))).slice(0, 20);
+      if (!matches.length) { searchResults.style.display = 'none'; return; }
+      searchResults.style.display = 'block';
+      matches.forEach(n => {
+        const el = document.createElement('div');
+        el.className = 'search-item';
+        el.textContent = n.label;
+        el.style.borderLeft = `3px solid ${n.color.background}`;
+        el.style.paddingLeft = '8px';
+        el.onclick = () => {
+          network.focus(n.id, { scale: 1.5, animation: true });
+          network.selectNodes([n.id]);
+          showInfo(n.id);
+          searchResults.style.display = 'none';
+          searchInput.value = '';
+        };
+        searchResults.appendChild(el);
+      });
+    });
+    document.addEventListener('click', e => {
+      if (!searchResults.contains(e.target) && e.target !== searchInput)
+        searchResults.style.display = 'none';
+    });
+
+    const hiddenCommunities = new Set();
+
+    function toggleAllCommunities(hide) {
+      document.querySelectorAll('.legend-item').forEach(item => {
+        hide ? item.classList.add('dimmed') : item.classList.remove('dimmed');
+      });
+      LEGEND.forEach(c => {
+        if (hide) hiddenCommunities.add(c.cid); else hiddenCommunities.delete(c.cid);
+      });
+      const updates = RAW_NODES.map(n => ({ id: n.id, hidden: hide }));
+      nodesDS.update(updates);
+    }
+
+    const legendEl = document.getElementById('legend');
+    LEGEND.forEach(c => {
+      const item = document.createElement('div');
+      item.className = 'legend-item';
+      item.innerHTML = `<div class="legend-dot" style="background:${c.color}"></div>
+    <span class="legend-label">${c.label}</span>
+    <span class="legend-count">${c.count}</span>`;
+      item.onclick = () => {
+        if (hiddenCommunities.has(c.cid)) {
+          hiddenCommunities.delete(c.cid);
+          item.classList.remove('dimmed');
+        } else {
+          hiddenCommunities.add(c.cid);
+          item.classList.add('dimmed');
+        }
+        const updates = RAW_NODES
+          .filter(n => n.community === c.cid)
+          .map(n => ({ id: n.id, hidden: hiddenCommunities.has(c.cid) }));
+        nodesDS.update(updates);
+      };
+      legendEl.appendChild(item);
+    });
+
+    if (HYPEREDGES.length > 0) {
+      const heWrap = document.getElementById('hyperedge-wrap');
+      const heList = document.getElementById('hyperedge-list');
+      heWrap.style.display = 'block';
+      HYPEREDGES.forEach(he => {
+        const item = document.createElement('div');
+        item.className = 'hyperedge-item';
+        item.innerHTML = `<span class="hyperedge-badge">${he.count}</span> ${esc(he.tag)}`;
+        item.onclick = () => {
+          const heNodeSet = new Set(he.nodes);
+          const updates = RAW_NODES.map(n => ({ id: n.id, hidden: !heNodeSet.has(n.id) }));
+          nodesDS.update(updates);
+        };
+        heList.appendChild(item);
+      });
+    }
+
+    function applyTimeFilter() {
+      const from = document.getElementById('date-from').value;
+      const to = document.getElementById('date-to').value;
+      if (!from && !to) return;
+      const updates = RAW_NODES.map(n => {
+        const d = n.created || n.updated || '';
+        let hidden = false;
+        if (from && d < from) hidden = true;
+        if (to && d > to) hidden = true;
+        return { id: n.id, hidden };
+      });
+      nodesDS.update(updates);
+    }
+
+    function clearTimeFilter() {
+      document.getElementById('date-from').value = '__DATE_MIN__';
+      document.getElementById('date-to').value = '__DATE_MAX__';
+      const updates = RAW_NODES.map(n => ({ id: n.id, hidden: false }));
+      nodesDS.update(updates);
+    }
+  </script>
+</body>
+
+</html>
