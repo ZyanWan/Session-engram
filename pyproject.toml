@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "session-engram"
+version = "1.0.0"
+description = "Cross-session memory system for AI coding assistants. Persists conversation context, task progress, and reusable experiences across sessions via Markdown files. Features Hook-powered auto-recall, interactive knowledge graph visualization, chronological timeline, and global experience library. Supports Claude Code, Cursor, and OpenCode."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Session-Engram Contributors"}
+]
+keywords = ["memory", "session", "engram", "context", "ai", "conversation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+sengram = "session_engram.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/ZyanWan/Session-engram"
+Documentation = "https://github.com/ZyanWan/Session-engram#readme"
+Repository = "https://github.com/ZyanWan/Session-engram"
+Changelog = "https://github.com/ZyanWan/Session-engram/blob/main/CHANGELOG.md"
+Issues = "https://github.com/ZyanWan/Session-engram/issues"
+
+[tool.setuptools]
+packages = ["session_engram"]
+
+[tool.setuptools.package-data]
+session_engram = ["templates/**", "SKILL.md"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23333'/><line x1='16' y1='6' x2='16' y2='26' stroke='%23666' stroke-width='2' stroke-linecap='round'/><circle cx='16' cy='9' r='3' fill='white' opacity='.9'/><circle cx='16' cy='17' r='3' fill='%23999'/><circle cx='16' cy='25' r='3' fill='%23CCC'/></svg>">
+  <title>Engram - Timeline</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #F9FAFB;
+      color: #333333;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 42px;
+      background: #FFFFFF;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #F3F4F6;
+      z-index: 100;
+    }
+
+    .title {
+      font-family: 'SF Pro Display', -apple-system, Georgia, 'Times New Roman', serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: #333333;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: baseline;
+      gap: 1px;
+    }
+
+    .title span {
+      color: #BBBBBB;
+      font-weight: 400;
+    }
+
+    #sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: #FFFFFF;
+      border-right: 1px solid #E5E7EB;
+      padding: 20px;
+      overflow-y: auto;
+      flex-shrink: 0;
+      margin-top: 42px;
+      height: calc(100vh - 42px);
+    }
+
+    #sidebar h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333333;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #sidebar h2::before {
+      content: "";
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: #6366f1;
+      border-radius: 50%;
+    }
+
+    .filter-section {
+      margin-bottom: 20px;
+    }
+
+    .filter-section h3 {
+      font-size: 10px;
+      font-weight: 600;
+      color: #9CA3AF;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    .filter-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 6px 8px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #555555;
+      transition: all 0.12s;
+    }
+
+    .filter-btn:hover {
+      background: #F3F4F6;
+      color: #333333;
+    }
+
+    .filter-btn.active {
+      background: #eff6ff;
+      color: #2563eb;
+    }
+
+    .filter-btn .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+    }
+
+    .filter-btn .count {
+      margin-left: auto;
+      font-size: 10.5px;
+      color: #AAAAAA;
+      background: #F3F4F6;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    .filter-btn.active .count {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .tag-btn {
+      padding: 2px 8px;
+      border: 1px solid #E5E7EB;
+      background: #FFFFFF;
+      border-radius: 4px;
+      font-size: 10px;
+      color: #6B7280;
+      cursor: pointer;
+      transition: all 0.12s;
+      font-weight: 500;
+    }
+
+    .tag-btn:hover {
+      background: #F3F4F6;
+      color: #444444;
+    }
+
+    .tag-btn.active {
+      background: #6366f1;
+      color: #fff;
+      border-color: #6366f1;
+    }
+
+    .tag-btn .count {
+      margin-left: 4px;
+      opacity: 0.7;
+    }
+
+    #stats {
+      padding: 12px;
+      background: #FAFAFA;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 10.5px;
+      color: #BBBBBB;
+      line-height: 1.6;
+    }
+
+    #stats strong {
+      color: #333333;
+    }
+
+    #main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 40px;
+      margin-top: 42px;
+    }
+
+    .month-group {
+      margin-bottom: 32px;
+    }
+
+    .month-header {
+      font-size: 16px;
+      font-weight: 700;
+      color: #333333;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #E5E7EB;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .month-header .month-count {
+      font-size: 10.5px;
+      font-weight: 500;
+      color: #AAAAAA;
+      background: #F3F4F6;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .timeline {
+      position: relative;
+      padding-left: 28px;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #E5E7EB;
+    }
+
+    .entry {
+      position: relative;
+      margin-bottom: 12px;
+      padding-left: 20px;
+    }
+
+    .entry::before {
+      content: "";
+      position: absolute;
+      left: -25px;
+      top: 12px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 2px #D1D5DB;
+      z-index: 1;
+    }
+
+    .entry.type-active-session::before {
+      background: #0891b2;
+      box-shadow: 0 0 0 2px #0891b2;
+    }
+
+    .entry.type-completed-session::before {
+      background: #6366f1;
+      box-shadow: 0 0 0 2px #6366f1;
+    }
+
+    .entry.type-archived-session::before {
+      background: #374151;
+      box-shadow: 0 0 0 2px #374151;
+    }
+
+    .entry.type-experience-design::before {
+      background: #d97706;
+      box-shadow: 0 0 0 2px #d97706;
+    }
+
+    .entry.type-experience-technical::before {
+      background: #dc2626;
+      box-shadow: 0 0 0 2px #dc2626;
+    }
+
+    .entry.type-experience-business::before {
+      background: #9333ea;
+      box-shadow: 0 0 0 2px #9333ea;
+    }
+
+    .card {
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.12s;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    .card:hover {
+      border-color: #999999;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .card.expanded {
+      border-color: #6366f1;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .type-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .type-icon.active-session {
+      background: #0891b2;
+    }
+
+    .type-icon.completed-session {
+      background: #6366f1;
+    }
+
+    .type-icon.archived-session {
+      background: #374151;
+    }
+
+    .type-icon.experience-design {
+      background: #d97706;
+    }
+
+    .type-icon.experience-technical {
+      background: #dc2626;
+    }
+
+    .type-icon.experience-business {
+      background: #9333ea;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #222222;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .card-date {
+      font-size: 11px;
+      color: #9CA3AF;
+      flex-shrink: 0;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .status-badge.in-progress {
+      background: #ecfdf5;
+      color: #059669;
+    }
+
+    .status-badge.completed,
+    .status-badge.resolved {
+      background: #eff6ff;
+      color: #2563eb;
+    }
+
+    .status-badge.archived {
+      background: #F3F4F6;
+      color: #6B7280;
+    }
+
+    .card-tags {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .card-tag {
+      font-size: 10px;
+      color: #6B7280;
+      background: #F3F4F6;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .card-detail {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #F3F4F6;
+    }
+
+    .card.expanded .card-detail {
+      display: block;
+    }
+
+    .card-summary {
+      font-size: 12px;
+      color: #555555;
+      line-height: 1.6;
+      margin-bottom: 8px;
+      padding: 8px 10px;
+      background: #F9FAFB;
+      border-radius: 8px;
+      border-left: 2px solid #E5E7EB;
+    }
+
+    .card-filepath {
+      font-size: 10.5px;
+      color: #888888;
+      font-family: "SF Mono", "Fira Code", monospace;
+      word-break: break-all;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #9CA3AF;
+    }
+
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+      font-size: 14px;
+      color: #666666;
+      margin-bottom: 8px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #D1D5DB;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #AAB0B8;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+
+      #sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 40vh;
+        border-right: none;
+        border-bottom: 1px solid #E5E7EB;
+      }
+
+      #main {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="header">
+    <div class="title"><span>Engram</span>Timeline</div>
+  </div>
+  <div id="sidebar">
+    <h2>Timeline</h2>
+    <div id="stats"></div>
+
+    <div class="filter-section">
+      <h3>Type</h3>
+      <div id="type-filters"></div>
+    </div>
+
+    <div class="filter-section">
+      <h3>Tags</h3>
+      <div id="tag-filters" class="tag-cloud"></div>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="timeline-container"></div>
+  </div>
+
+  <script>
+    const ENTRIES = /*__ENTRIES__*/ [];
+
+    const TYPE_CONFIG = {
+      "active-session": { icon: "S", label: "Active Session", color: "#0891b2" },
+      "completed-session": { icon: "S", label: "Completed", color: "#6366f1" },
+      "archived-session": { icon: "S", label: "Archived", color: "#374151" },
+      "experience-design": { icon: "E", label: "Design", color: "#d97706" },
+      "experience-technical": { icon: "E", label: "Technical", color: "#dc2626" },
+      "experience-business": { icon: "E", label: "Business", color: "#9333ea" },
+    };
+
+    const MONTH_NAMES = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    let activeTypes = new Set();
+    let activeTags = new Set();
+
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s || "";
+      return d.innerHTML;
+    }
+
+    function parseDate(s) {
+      if (!s) return null;
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function formatMonth(date) {
+      return `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
+    }
+
+    function renderStats() {
+      const total = ENTRIES.length;
+      const types = {};
+      ENTRIES.forEach(e => {
+        const cat = e.file_type.startsWith("experience-") ? "experience" : e.file_type;
+        types[cat] = (types[cat] || 0) + 1;
+      });
+
+      const parts = [];
+      if (types["active-session"]) parts.push(`<strong>${types["active-session"]}</strong> active`);
+      if (types["completed-session"]) parts.push(`<strong>${types["completed-session"]}</strong> completed`);
+      if (types["archived-session"]) parts.push(`<strong>${types["archived-session"]}</strong> archived`);
+      if (types["experience"]) parts.push(`<strong>${types["experience"]}</strong> experience`);
+
+      document.getElementById("stats").innerHTML =
+        `<strong>${total}</strong> entries<br>${parts.join(" · ")}`;
+    }
+
+    function renderTypeFilters() {
+      const counts = {};
+      ENTRIES.forEach(e => {
+        counts[e.file_type] = (counts[e.file_type] || 0) + 1;
+      });
+
+      const container = document.getElementById("type-filters");
+      container.innerHTML = "";
+
+      const allBtn = document.createElement("button");
+      allBtn.className = "filter-btn" + (activeTypes.size === 0 ? " active" : "");
+      allBtn.innerHTML = `<span class="dot" style="background:#6366f1"></span> All <span class="count">${ENTRIES.length}</span>`;
+      allBtn.onclick = () => {
+        activeTypes.clear();
+        applyFilters();
+      };
+      container.appendChild(allBtn);
+
+      for (const [type, cfg] of Object.entries(TYPE_CONFIG)) {
+        if (!counts[type]) continue;
+        const btn = document.createElement("button");
+        btn.className = "filter-btn" + (activeTypes.has(type) ? " active" : "");
+        btn.innerHTML = `<span class="dot" style="background:${cfg.color}"></span> ${cfg.label} <span class="count">${counts[type]}</span>`;
+        btn.onclick = () => {
+          if (activeTypes.has(type)) {
+            activeTypes.delete(type);
+          } else {
+            activeTypes.clear();
+            activeTypes.add(type);
+          }
+          applyFilters();
+        };
+        container.appendChild(btn);
+      }
+    }
+
+    function renderTagFilters() {
+      const counts = {};
+      ENTRIES.forEach(e => {
+        (e.tags || []).forEach(t => {
+          const tl = t.toLowerCase();
+          counts[tl] = (counts[tl] || 0) + 1;
+        });
+      });
+
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      const container = document.getElementById("tag-filters");
+      container.innerHTML = "";
+
+      sorted.forEach(([tag, count]) => {
+        const btn = document.createElement("button");
+        btn.className = "tag-btn" + (activeTags.has(tag) ? " active" : "");
+        btn.innerHTML = `${esc(tag)}<span class="count">${count}</span>`;
+        btn.onclick = () => {
+          if (activeTags.has(tag)) {
+            activeTags.delete(tag);
+          } else {
+            activeTags.add(tag);
+          }
+          applyFilters();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function renderTimeline() {
+      const filtered = ENTRIES.filter(e => {
+        if (activeTypes.size > 0 && !activeTypes.has(e.file_type)) return false;
+        if (activeTags.size > 0) {
+          const entryTags = (e.tags || []).map(t => t.toLowerCase());
+          if (!entryTags.some(t => activeTags.has(t))) return false;
+        }
+        return true;
+      });
+
+      const container = document.getElementById("timeline-container");
+
+      if (!filtered.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <h3>No entries found</h3>
+            <p>Try adjusting your filters</p>
+          </div>`;
+        return;
+      }
+
+      const groups = {};
+      filtered.forEach(e => {
+        const d = parseDate(e.created);
+        const key = d ? formatMonth(d) : "Unknown Date";
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(e);
+      });
+
+      const sortedKeys = Object.keys(groups).sort((a, b) => {
+        if (a === "Unknown Date") return 1;
+        if (b === "Unknown Date") return -1;
+        const da = new Date(groups[a][0].created);
+        const db = new Date(groups[b][0].created);
+        return db - da;
+      });
+
+      let html = "";
+      sortedKeys.forEach(month => {
+        const entries = groups[month];
+        html += `<div class="month-group">`;
+        html += `<div class="month-header">${esc(month)} <span class="month-count">${entries.length}</span></div>`;
+        html += `<div class="timeline">`;
+
+        entries.forEach(e => {
+          const cfg = TYPE_CONFIG[e.file_type] || { icon: "?", color: "#94a3b8" };
+          const typeClass = e.file_type;
+          const dateStr = e.created || e.updated || "";
+          const tags = (e.tags || []).map(t =>
+            `<span class="card-tag">${esc(t)}</span>`
+          ).join("");
+
+          html += `
+            <div class="entry type-${typeClass}" data-id="${esc(e.id)}">
+              <div class="card" onclick="this.classList.toggle('expanded')">
+                <div class="card-header">
+                  <div class="type-icon ${typeClass}">${cfg.icon}</div>
+                  <div class="card-title" title="${esc(e.label)}">${esc(e.label)}</div>
+                  <div class="card-date">${esc(dateStr)}</div>
+                </div>
+                <div class="card-meta">
+                  <span class="status-badge ${e.status}">${esc(e.status)}</span>
+                  <div class="card-tags">${tags}</div>
+                </div>
+                <div class="card-detail">
+                  <div class="card-summary">${esc(e.summary) || "<em>No summary available</em>"}</div>
+                  <div class="card-filepath">${esc(e.source_file)}</div>
+                </div>
+              </div>
+            </div>`;
+        });
+
+        html += `</div></div>`;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function applyFilters() {
+      renderTypeFilters();
+      renderTagFilters();
+      renderTimeline();
+    }
+
+    function init() {
+      renderStats();
+      renderTypeFilters();
+      renderTagFilters();
+      renderTimeline();
+    }
+
+    init();
+  </script>
+</body>
+
+</html>
