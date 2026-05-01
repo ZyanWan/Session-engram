@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2026-05-01
+
+### Fixed
+- Fixed PyPI package missing core submodules (`session_engram.commands`, `session_engram.core`)
+- Fixed output paths for `sengram map` and `sengram timeline` (HTML files now correctly placed in `.engram/` directory)
+- Updated setuptools package configuration to include all required subpackages
+
 ## [1.0.0] - 2026-04-29
 
 ### Added

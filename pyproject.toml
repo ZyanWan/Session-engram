@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "session-engram"
-version = "1.0.0"
+version = "1.0.1"
 description = "Cross-session memory system for AI coding assistants. Persists conversation context, task progress, and reusable experiences across sessions via Markdown files. Features Hook-powered auto-recall, interactive knowledge graph visualization, chronological timeline, and global experience library. Supports Claude Code, Cursor, and OpenCode."
 readme = "README.md"
 license = {text = "MIT"}
@@ -48,7 +48,7 @@ Changelog = "https://github.com/ZyanWan/Session-engram/blob/main/CHANGELOG.md"
 Issues = "https://github.com/ZyanWan/Session-engram/issues"
 
 [tool.setuptools]
-packages = ["session_engram"]
+packages = ["session_engram", "session_engram.commands", "session_engram.core"]
 
 [tool.setuptools.package-data]
 session_engram = ["templates/**", "SKILL.md"]

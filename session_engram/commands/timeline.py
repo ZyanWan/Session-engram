@@ -35,7 +35,7 @@ def cmd_timeline():
     archived = sum(1 for e in entries if e["file_type"] == "archived-session")
     experience = sum(1 for e in entries if e["file_type"].startswith("experience-"))
 
-    output_path = os.path.join(base, "..", "engram-timeline.html")
+    output_path = os.path.join(base, "engram-timeline.html")
     generate_timeline_html(entries, output_path)
 
     print(f"✅ Engram timeline generated: {output_path}")

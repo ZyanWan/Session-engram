@@ -40,7 +40,7 @@ def cmd_map():
     archived_sessions = sum(1 for n in nodes if n.get("file_type") == "archived-session")
     experiences = sum(1 for n in nodes if n.get("file_type", "").startswith("experience-"))
 
-    output_path = os.path.join(base, "..", "engram-map.html")
+    output_path = os.path.join(base, "engram-map.html")
     generate_vis_html(nodes, edges, communities, tag_groups, output_path)
 
     print(f"✅ Engram map generated: {output_path}")
