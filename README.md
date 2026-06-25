@@ -20,7 +20,7 @@
 > 用户：「继续做前端页面」
 > AI：「请问前端页面的进展到哪一步了？」（完全不知道之前的 session 已经完成了 80%）
 
-![跨 Session 记忆断层](pictures/memory-gap-session-loss.png)
+![跨 Session 记忆断层](docs/pictures/memory-gap-session-loss.png)
 
 ### 问题二：经验无法复用
 
@@ -33,7 +33,7 @@
 
 Session-Engram 的思路是：**把 session 记忆和经验结构化存储，然后通过 Hook 机制让 AI 在新 session 开始时自动读取。**
 
-![结构化存储架构](pictures/structured-storage-architecture.png)
+![结构化存储架构](docs/pictures/structured-storage-architecture.png)
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -219,11 +219,11 @@ session_engram/
 | `sengram info` | 显示状态和目录信息 |
 | `sengram map` | 生成交互式关系地图（vis.js） |
 
-![知识图谱](pictures/knowledge-graph-constellation-map.png)
+![知识图谱](docs/pictures/knowledge-graph-constellation-map.png)
 
 | `sengram timeline` | 生成时间线日志视图 |
 
-![时间线](pictures/chronological-timeline-view.png)
+![时间线](docs/pictures/chronological-timeline-view.png)
 
 | `sengram index` | 生成 AI 读取的记忆索引（`index.md`） |
 | `sengram update` | 以表格形式更新 `index.md`（人类可读版） |
@@ -238,7 +238,7 @@ session_engram/
 
 Session-Engram 通过 **Hook 机制** 让 AI 主动查阅记忆，而非被动等待用户提示。
 
-![Hook 机制](pictures/hook-mechanism-context-inheritance.png)
+![Hook 机制](docs/pictures/hook-mechanism-context-inheritance.png)
 
 ### 为什么需要 Hook？
 
